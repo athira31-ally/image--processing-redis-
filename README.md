@@ -40,10 +40,7 @@ Internet → ALB → AWS Fargate (ECS)
    ```bash
    ./start.sh
    ```
-4. **Test the API:**
-   ```bash
-   python test_api.py
-   ```
+
 
 ### Docker Development
 1. **Build and run with Docker Compose:**
@@ -55,25 +52,6 @@ Internet → ALB → AWS Fargate (ECS)
    - Docs: http://localhost:8000/docs
    - Health: http://localhost:8000/health
 
-## API Endpoints
-
-### Core Endpoints
-- `GET /` - Health check and worker status
-- `GET /health` - Detailed health status  
-- `POST /upload` - Upload an image
-- `POST /process/{file_id}` - Process an image
-- `GET /status/{processing_id}` - Check processing status
-- `GET /download/{processing_id}` - Download processed image
-- `GET /list` - List uploaded images
-
-### Image Operations
-- **resize** - Resize image (width, height)
-- **blur** - Apply Gaussian blur (intensity)
-- **sharpen** - Sharpen image (intensity)
-- **grayscale** - Convert to grayscale
-- **sepia** - Apply sepia tone (intensity)
-- **brightness** - Adjust brightness (intensity)
-- **contrast** - Adjust contrast (intensity)
 
 ## AWS Deployment Guide
 
@@ -166,62 +144,7 @@ Internet → ALB → AWS Fargate (ECS)
    aws ecs register-task-definition --cli-input-json file://final-task-def.json --region us-east-1
    ```
 
-   **Sample Task Definition (final-task-def.json):**
-   ```json
-   {
-     "family": "image-processor-task",
-     "networkMode": "awsvpc",
-     "requiresCompatibilities": ["FARGATE"],
-     "cpu": "512",
-     "memory": "1024",
-     "executionRoleArn": "arn:aws:iam::YOUR_ACCOUNT:role/ecsTaskExecutionRole",
-     "containerDefinitions": [
-       {
-         "name": "image-processor",
-         "image": "YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/image-processor:latest",
-         "portMappings": [
-           {
-             "containerPort": 8000,
-             "protocol": "tcp"
-           }
-         ],
-         "environment": [
-           {
-             "name": "REDIS_URL",
-             "value": "redis://YOUR_REDIS_EC2_PRIVATE_IP:6379"
-           }
-         ],
-         "logConfiguration": {
-           "logDriver": "awslogs",
-           "options": {
-             "awslogs-group": "/ecs/image-processor",
-             "awslogs-region": "us-east-1",
-             "awslogs-stream-prefix": "api"
-           }
-         }
-       },
-       {
-         "name": "celery-worker",
-         "image": "YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/image-processor:latest",
-         "command": ["celery", "-A", "celery_worker", "worker", "--loglevel=info"],
-         "environment": [
-           {
-             "name": "REDIS_URL",
-             "value": "redis://YOUR_REDIS_EC2_PRIVATE_IP:6379"
-           }
-         ],
-         "logConfiguration": {
-           "logDriver": "awslogs",
-           "options": {
-             "awslogs-group": "/ecs/image-processor",
-             "awslogs-region": "us-east-1",
-             "awslogs-stream-prefix": "celery"
-           }
-         }
-       }
-     ]
-   }
-   ```
+   
 
 ### Step 6: Create CloudWatch Log Group
 
