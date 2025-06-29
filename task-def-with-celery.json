@@ -1,0 +1,73 @@
+{
+  "family": "image-processor-task",
+  "executionRoleArn": "arn:aws:iam::534211282949:role/ecsTaskExecutionRole",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "containerDefinitions": [
+    {
+      "name": "image-processor",
+      "image": "534211282949.dkr.ecr.us-east-1.amazonaws.com/image-processor:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "hostPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "REDIS_URL",
+          "value": "redis://172.31.30.18:6379"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/image-processor",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "api"
+        }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "curl -f http://localhost:8000/health || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    },
+    {
+      "name": "celery-worker",
+      "image": "534211282949.dkr.ecr.us-east-1.amazonaws.com/image-processor:latest",
+      "essential": false,
+      "command": [
+        "celery",
+        "-A",
+        "main.celery_app",
+        "worker",
+        "--loglevel=info",
+        "--concurrency=2"
+      ],
+      "environment": [
+        {
+          "name": "REDIS_URL",
+          "value": "redis://172.31.30.18:6379"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/celery-worker",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "worker"
+        }
+      }
+    }
+  ]
+}
